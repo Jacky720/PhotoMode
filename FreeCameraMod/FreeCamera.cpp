@@ -2,6 +2,7 @@
 
 #include "FreeCamera.h"
 #include <cCameraGame.h>
+#include <cCameraGame.cpp>
 #include <shared.h>
 #include <cmath>
 #include <GameMenuStatus.h>
@@ -135,6 +136,8 @@ void FreeCamera::Run() noexcept
 
 		once = false;
 	}
+	if (!active)
+		Sleep(20u);
 }
 
 void FreeCamera::LoadConfig() noexcept
@@ -151,6 +154,6 @@ void FreeCamera::SaveConfig() noexcept
 	CIniReader iniReader("FreeCamera.ini");
 
 	iniReader.WriteInteger("Settings", "key", key);
-	iniReader.WriteInteger("Settings", "speed", controlSpeed);
-	iniReader.WriteInteger("Settings", "turboSpeed", turboSpeed);
+	iniReader.WriteFloat("Settings", "speed", controlSpeed);
+	iniReader.WriteFloat("Settings", "turboSpeed", turboSpeed);
 }
