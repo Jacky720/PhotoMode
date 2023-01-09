@@ -7,6 +7,12 @@
 #include <cmath>
 #include <GameMenuStatus.h>
 #include "IniReader.h"
+#include <cGameUIManager.h>
+#include <cGameUIManager.cpp>
+#include <cVec4.cpp> 
+#include <Pl0000.h>
+
+// IT CAN'T FIND CPP FILES
 
 bool FreeCamera::CanRun() noexcept
 {
@@ -32,10 +38,13 @@ void FreeCamera::Run() noexcept
 
 	if (!active && !once)
 	{
-		stpFlags &= ~(0x80000000 | 0x00010000);
+		stpFlags &= ~(0x80000000 | 0x00010000 | 0x02000000);
 
 		if (g_GameMenuStatus == InGame)
+		{
 			*(bool*)(shared::base + 0x19C2D54) = false;
+			stpFlags &= ~0x02000000;
+		}
 
 		once = true;
 	}
@@ -47,6 +56,7 @@ void FreeCamera::Run() noexcept
 		float& yaw = CameraGame->field_364;
 		float& pitch = CameraGame->field_218;
 		float& fov = CameraGame->m_vecViewAngle.z;
+		float& roll = CameraGame->m_vecViewAngle.x;
 
 		cVec4& rotate = CameraGame->m_vecRotationAt;
 		cVec4& pos = CameraGame->m_vecPosition;
@@ -55,6 +65,8 @@ void FreeCamera::Run() noexcept
 
 		if (shared::IsKeyPressed(VK_SHIFT))
 			speed = turboSpeed;
+		else if (shared::IsKeyPressed(VK_LMENU))
+			speed /= 2;
 
 		if (shared::IsKeyPressed(87))
 		{
@@ -130,12 +142,33 @@ void FreeCamera::Run() noexcept
 		else if (shared::IsKeyPressed(VK_SUBTRACT))
 			fov = shared::clamp(fov - 0.005f, 0.01f, 2.87079525f);
 
+		if (shared::IsKeyPressed(VK_NUMPAD0))
+			roll = shared::clamp(roll - 0.005f, -0.8f, 0.8f);
+		else if (shared::IsKeyPressed(VK_DECIMAL))
+			roll = shared::clamp(roll + 0.005f, -0.8f, 0.8f);
+
 		if (g_GameMenuStatus == InGame)
+		{
 			*(bool*)(shared::base + 0x19C2D54) = true;
+			stpFlags |= 0x02000000;
+		}
+		else
+			stpFlags &= ~0x02000000;
 
 		stpFlags |= (0x80000000 | 0x00010000);
 
 		once = false;
+
+		if (shared::IsKeyPressed(VK_OEM_5))
+		{
+			Pl0000* player = (Pl0000*)g_cGameUIManager.m_pPl;
+
+			if (!player)
+				return;
+
+			player->m_vecOffset = pos;
+			player->m_vecPos = pos;
+		}
 	}
 
 	if (!active)

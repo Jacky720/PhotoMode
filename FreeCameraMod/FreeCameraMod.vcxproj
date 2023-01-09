@@ -73,6 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.asi</TargetExt>
     <IncludePath>F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\shared;F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\game;$(IncludePath)</IncludePath>
+    <SourcePath>F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\shared;F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\game;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
