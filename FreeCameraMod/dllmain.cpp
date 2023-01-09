@@ -13,7 +13,7 @@ DWORD WINAPI thing(LPVOID) noexcept
             once = true;
         }
         FreeCamera::Run();
-        Sleep(1u);
+        Sleep(10u);
     }
 }
 

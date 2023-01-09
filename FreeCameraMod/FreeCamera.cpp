@@ -32,8 +32,7 @@ void FreeCamera::Run() noexcept
 
 	if (!active && !once)
 	{
-		stpFlags &= ~0x80000000;
-		stpFlags &= ~0x00010000;
+		stpFlags &= ~(0x80000000 | 0x00010000);
 
 		if (g_GameMenuStatus == InGame)
 			*(bool*)(shared::base + 0x19C2D54) = false;
@@ -127,15 +126,18 @@ void FreeCamera::Run() noexcept
 		}
 
 		if (shared::IsKeyPressed(VK_ADD))
-			fov = shared::clamp(fov + 0.05f, 0.01f, 2.87079525f);
+			fov = shared::clamp(fov + 0.005f, 0.01f, 2.87079525f);
 		else if (shared::IsKeyPressed(VK_SUBTRACT))
-			fov = shared::clamp(fov - 0.05f, 0.01f, 2.87079525f);
+			fov = shared::clamp(fov - 0.005f, 0.01f, 2.87079525f);
 
 		if (g_GameMenuStatus == InGame)
 			*(bool*)(shared::base + 0x19C2D54) = true;
 
+		stpFlags |= (0x80000000 | 0x00010000);
+
 		once = false;
 	}
+
 	if (!active)
 		Sleep(20u);
 }
