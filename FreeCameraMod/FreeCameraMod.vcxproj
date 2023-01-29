@@ -23,7 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{d122f2f6-a2ab-48e3-8ff9-6419caa32574}</ProjectGuid>
     <RootNamespace>FreeCameraMod</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -73,7 +73,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.asi</TargetExt>
     <IncludePath>F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\shared;F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\game;$(IncludePath)</IncludePath>
-    <SourcePath>F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\shared;F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\game;$(SourcePath)</SourcePath>
+    <SourcePath>F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\game;$(SourcePath)</SourcePath>
+    <LibraryPath>F:\MEDIA\Документы\GitHub\mgr-plugin-sdk\game;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -102,6 +103,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -1,16 +1,25 @@
 #define PI 3.14159265359f
 
 #include "FreeCamera.h"
-#include <cCameraGame.h>
-#include <cCameraGame.cpp>
-#include <shared.h>
 #include <cmath>
-#include <GameMenuStatus.h>
+#include "Pl0000.h"
+#include "cCameraGame.h"
+#include "shared.h"
 #include "IniReader.h"
-#include <cGameUIManager.h>
-#include <cGameUIManager.cpp>
-#include <cVec4.cpp> 
-#include <Pl0000.h>
+#include "cGameUIManager.h"
+#include "GameMenuStatus.h"
+
+#include "cCameraGame.cpp"
+#include "cGameUIManager.cpp"
+#include "cVec4.cpp"
+
+struct cVec2
+{
+	float x;
+	float y;
+};
+
+using namespace shared;
 
 // IT CAN'T FIND CPP FILES
 
@@ -30,19 +39,19 @@ void FreeCamera::Run() noexcept
 	if (!CanRun())
 		return;
 
-	unsigned int& stpFlags = *(unsigned int*)(shared::base + 0x17EA070);
+	unsigned int& stpFlags = *(unsigned int*)(base + 0x17EA070);
 	static bool once = false;
 
-	if (shared::IsKeyPressed(key, false))
+	if (IsKeyPressed(key, false))
 		active = !active;
 
 	if (!active && !once)
 	{
-		stpFlags &= ~(0x80000000 | 0x00010000 | 0x02000000);
+		stpFlags &= ~(0x80000000 | 0x00010000 | 0x02000000 | 0x8000000);
 
 		if (g_GameMenuStatus == InGame)
 		{
-			*(bool*)(shared::base + 0x19C2D54) = false;
+			*(bool*)(base + 0x19C2D54) = false;
 			stpFlags &= ~0x02000000;
 		}
 
@@ -63,12 +72,12 @@ void FreeCamera::Run() noexcept
 
 		float speed = controlSpeed;
 
-		if (shared::IsKeyPressed(VK_SHIFT))
+		if (IsKeyPressed(VK_SHIFT))
 			speed = turboSpeed;
-		else if (shared::IsKeyPressed(VK_LMENU))
+		else if (IsKeyPressed(VK_LMENU))
 			speed /= 2;
 
-		if (shared::IsKeyPressed(87))
+		if (IsKeyPressed(87))
 		{
 			pos.x += speed * sin(yaw);
 			pos.y += speed * sin(pitch);
@@ -78,7 +87,7 @@ void FreeCamera::Run() noexcept
 			rotate.y += speed * sin(pitch);
 			rotate.z += speed * cos(yaw);
 		}
-		else if (shared::IsKeyPressed(83))
+		else if (IsKeyPressed(83))
 		{
 			pos.x -= speed * sin(yaw);
 			pos.y -= speed * sin(pitch);
@@ -89,7 +98,7 @@ void FreeCamera::Run() noexcept
 			rotate.z -= speed * cos(yaw);
 		}
 
-		if (shared::IsKeyPressed(65))
+		if (IsKeyPressed(65))
 		{
 			pos.x -= speed * sin(yaw - PI / 2);
 			pos.z -= speed * cos(yaw - PI / 2);
@@ -97,7 +106,7 @@ void FreeCamera::Run() noexcept
 			rotate.x -= speed * sin(yaw - PI / 2);
 			rotate.z -= speed * cos(yaw - PI / 2);
 		}
-		else if (shared::IsKeyPressed(68))
+		else if (IsKeyPressed(68))
 		{
 			pos.x += speed * sin(yaw - PI / 2);
 			pos.z += speed * cos(yaw - PI / 2);
@@ -106,60 +115,84 @@ void FreeCamera::Run() noexcept
 			rotate.z += speed * cos(yaw - PI / 2);
 		}
 
-		if (shared::IsKeyPressed(VK_SPACE))
+		if (IsKeyPressed(VK_SPACE))
 		{
 			pos.y += speed;
 			rotate.y += speed;
 		}
-		else if (shared::IsKeyPressed(VK_CONTROL))
+		else if (IsKeyPressed(VK_CONTROL))
 		{
 			pos.y -= speed;
 			rotate.y -= speed;
 		}
 
-		if (shared::IsKeyPressed(VK_UP))
-			rotate.y += speed * fov;
-		else if (shared::IsKeyPressed(VK_DOWN))
-			rotate.y -= speed * fov;
+		tagPOINT absRes = *(tagPOINT*)(base + 0x14CE9A4);
+		tagPOINT center = tagPOINT(absRes.x / 2, absRes.y / 2);
 
-		if (shared::IsKeyPressed(VK_LEFT))
-		{
-			yaw += speed;
+		tagPOINT mousePosition = *(tagPOINT*)(base + 0x14CE9CC);
 
-			rotate.x = pos.x + sin(yaw) * (speed * 20);
-			rotate.z = pos.z + cos(yaw) * (speed * 20);
-		}
-		if (shared::IsKeyPressed(VK_RIGHT))
-		{
-			yaw -= speed;
-
-			rotate.x = pos.x + sin(yaw) * (speed * 20);
-			rotate.z = pos.z + cos(yaw) * (speed * 20);
-		}
-
-		if (shared::IsKeyPressed(VK_ADD))
-			fov = shared::clamp(fov + 0.005f, 0.01f, 2.87079525f);
-		else if (shared::IsKeyPressed(VK_SUBTRACT))
-			fov = shared::clamp(fov - 0.005f, 0.01f, 2.87079525f);
-
-		if (shared::IsKeyPressed(VK_NUMPAD0))
-			roll = shared::clamp(roll - 0.005f, -0.8f, 0.8f);
-		else if (shared::IsKeyPressed(VK_DECIMAL))
-			roll = shared::clamp(roll + 0.005f, -0.8f, 0.8f);
+		float mouseDelta[2] = { (float)(center.x - mousePosition.x) / 1000.0f, (float)(center.y - mousePosition.y) / 1000.0f};
 
 		if (g_GameMenuStatus == InGame)
 		{
-			*(bool*)(shared::base + 0x19C2D54) = true;
+			rotate.y += clamp(mouseDelta[1], -1.0f, 1.0f) * fov;
+		}
+		else
+		{
+			if (IsKeyPressed(VK_UP))
+				rotate.y += speed * fov;
+			else if (IsKeyPressed(VK_DOWN))
+				rotate.y -= speed * fov;
+		}
+
+		if (g_GameMenuStatus == InGame)
+		{
+			yaw += clamp(mouseDelta[0], -1.0f, 1.0f) * fov;
+
+			rotate.x = pos.x + sin(yaw) * (speed * 20) * fov;
+			rotate.z = pos.z + cos(yaw) * (speed * 20) * fov;
+		}
+		else
+		{
+			if (IsKeyPressed(VK_LEFT))
+			{
+				yaw += speed;
+
+				rotate.x = pos.x + sin(yaw) * (speed * 20) * fov;
+				rotate.z = pos.z + cos(yaw) * (speed * 20) * fov;
+			}
+			else if (IsKeyPressed(VK_RIGHT))
+			{
+				yaw -= speed;
+
+				rotate.x = pos.x + sin(yaw) * (speed * 20) * fov;
+				rotate.z = pos.z + cos(yaw) * (speed * 20) * fov;
+			}
+		}
+
+		if (IsKeyPressed(VK_ADD))
+			fov = clamp(fov + 0.005f, 0.01f, 2.87079525f);
+		else if (IsKeyPressed(VK_SUBTRACT))
+			fov = clamp(fov - 0.005f, 0.01f, 2.87079525f);
+
+		if (IsKeyPressed(VK_NUMPAD0))
+			roll = clamp(roll - 0.005f, -0.8f, 0.8f);
+		else if (IsKeyPressed(VK_DECIMAL))
+			roll = clamp(roll + 0.005f, -0.8f, 0.8f);
+
+		if (g_GameMenuStatus == InGame)
+		{
+			*(bool*)(base + 0x19C2D54) = true;
 			stpFlags |= 0x02000000;
 		}
 		else
 			stpFlags &= ~0x02000000;
 
-		stpFlags |= (0x80000000 | 0x00010000);
+		stpFlags |= (0x80000000 | 0x00010000 | 0x8000000);
 
 		once = false;
 
-		if (shared::IsKeyPressed(VK_OEM_5))
+		if (IsKeyPressed(VK_OEM_5))
 		{
 			Pl0000* player = (Pl0000*)g_cGameUIManager.m_pPl;
 
@@ -169,6 +202,11 @@ void FreeCamera::Run() noexcept
 			player->m_vecOffset = pos;
 			player->m_vecPos = pos;
 		}
+		
+		CameraGame->field_4D0.x = 0.0f;
+		CameraGame->field_4D0.y = 0.0f;
+		CameraGame->field_4D0.z = 0.0f;
+		CameraGame->field_4D0.w = 0.0f;
 	}
 
 	if (!active)
