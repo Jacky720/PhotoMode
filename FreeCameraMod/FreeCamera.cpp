@@ -8,6 +8,7 @@
 #include "IniReader.h"
 #include "cGameUIManager.h"
 #include "GameMenuStatus.h"
+#include "StpFlags.h"
 
 #include "cCameraGame.cpp"
 #include "cGameUIManager.cpp"
@@ -39,38 +40,52 @@ void FreeCamera::Run() noexcept
 	if (!CanRun())
 		return;
 
-	unsigned int& stpFlags = *(unsigned int*)(base + 0x17EA070);
+	StpFlags &stpFlags = g_StpFlags;
+	static float lastFov = 0.0f;
 	static bool once = false;
 
 	if (IsKeyPressed(key, false))
 		active = !active;
 
+	cCameraGame* CameraGame = &g_cCameraGame;
+
+	float& yaw = CameraGame->field_364;
+	float& pitch = CameraGame->field_218;
+	float& fov = CameraGame->m_vecViewAngle.z;
+	float& roll = CameraGame->m_vecViewAngle.x;
+
+	cVec4& rotate = CameraGame->m_vecRotationAt;
+	cVec4& pos = CameraGame->m_vecPosition;
+
+	static bool onceSleep = false;
+
 	if (!active && !once)
 	{
-		stpFlags &= ~(0x80000000 | 0x00010000 | 0x02000000 | 0x8000000);
-
+		stpFlags.STP_OBJ = false;
+		stpFlags.STP_UI = false;
+		stpFlags.STP_ESP = false;
+		stpFlags.STP_TRIGGER = false;
 		if (g_GameMenuStatus == InGame)
 		{
 			*(bool*)(base + 0x19C2D54) = false;
-			stpFlags &= ~0x02000000;
+			stpFlags.STP_UI = false;
 		}
-
+		fov = lastFov;
 		once = true;
+		onceSleep = false;
 	}
 
 	if (active)
 	{
-		cCameraGame* CameraGame = &g_cCameraGame;
-
-		float& yaw = CameraGame->field_364;
-		float& pitch = CameraGame->field_218;
-		float& fov = CameraGame->m_vecViewAngle.z;
-		float& roll = CameraGame->m_vecViewAngle.x;
-
-		cVec4& rotate = CameraGame->m_vecRotationAt;
-		cVec4& pos = CameraGame->m_vecPosition;
-
 		float speed = controlSpeed;
+
+		static bool fovChangeOnce = false;
+
+		if (!fovChangeOnce)
+		{
+			lastFov = fov;
+			fovChangeOnce = true;
+		}
 
 		if (IsKeyPressed(VK_SHIFT))
 			speed = turboSpeed;
@@ -100,19 +115,19 @@ void FreeCamera::Run() noexcept
 
 		if (IsKeyPressed(65))
 		{
-			pos.x -= speed * sin(yaw - PI / 2);
-			pos.z -= speed * cos(yaw - PI / 2);
+			pos.x -= speed * sin(yaw - DegreeToRadian(90));
+			pos.z -= speed * cos(yaw - DegreeToRadian(90));
 
-			rotate.x -= speed * sin(yaw - PI / 2);
-			rotate.z -= speed * cos(yaw - PI / 2);
+			rotate.x -= speed * sin(yaw - DegreeToRadian(90));
+			rotate.z -= speed * cos(yaw - DegreeToRadian(90));
 		}
 		else if (IsKeyPressed(68))
 		{
-			pos.x += speed * sin(yaw - PI / 2);
-			pos.z += speed * cos(yaw - PI / 2);
+			pos.x += speed * sin(yaw - DegreeToRadian(90));
+			pos.z += speed * cos(yaw - DegreeToRadian(90));
 
-			rotate.x += speed * sin(yaw - PI / 2);
-			rotate.z += speed * cos(yaw - PI / 2);
+			rotate.x += speed * sin(yaw - DegreeToRadian(90));
+			rotate.z += speed * cos(yaw - DegreeToRadian(90));
 		}
 
 		if (IsKeyPressed(VK_SPACE))
@@ -135,7 +150,8 @@ void FreeCamera::Run() noexcept
 
 		if (g_GameMenuStatus == InGame)
 		{
-			rotate.y += clamp(mouseDelta[1], -1.0f, 1.0f) * fov;
+			if (mouseDelta[1] != 0.0f)
+				rotate.y += clamp(mouseDelta[1], -5.0f, 5.0f) * fov;
 		}
 		else
 		{
@@ -147,10 +163,13 @@ void FreeCamera::Run() noexcept
 
 		if (g_GameMenuStatus == InGame)
 		{
-			yaw += clamp(mouseDelta[0], -1.0f, 1.0f) * fov;
+			if (mouseDelta[0] != 0.0f)
+			{
+				yaw += clamp(mouseDelta[0], -5.0f, 5.0f);
 
-			rotate.x = pos.x + sin(yaw) * (speed * 20) * fov;
-			rotate.z = pos.z + cos(yaw) * (speed * 20) * fov;
+				rotate.x = pos.x + sin(yaw) * (speed * 20) * fov;
+				rotate.z = pos.z + cos(yaw) * (speed * 20) * fov;
+			}
 		}
 		else
 		{
@@ -183,12 +202,19 @@ void FreeCamera::Run() noexcept
 		if (g_GameMenuStatus == InGame)
 		{
 			*(bool*)(base + 0x19C2D54) = true;
-			stpFlags |= 0x02000000;
+			stpFlags.STP_UI = true;
+			if (!onceSleep)
+			{
+				Sleep(100u);
+				onceSleep = true;
+			}
 		}
 		else
-			stpFlags &= ~0x02000000;
+			stpFlags.STP_UI = false;
 
-		stpFlags |= (0x80000000 | 0x00010000 | 0x8000000);
+		stpFlags.STP_OBJ = true;
+		stpFlags.STP_ESP = true;
+		stpFlags.STP_TRIGGER = true;
 
 		once = false;
 
