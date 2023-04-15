@@ -4,14 +4,9 @@
 
 DWORD WINAPI thing(LPVOID) noexcept
 {
+    FreeCamera::LoadConfig();
     while (true)
     {
-        static bool once = false;
-        if (!once)
-        {
-            FreeCamera::LoadConfig();
-            once = true;
-        }
         FreeCamera::Run();
         Sleep(10u);
     }
